@@ -1,0 +1,728 @@
+# Java OOP 期末复习笔记
+
+> 基于 lecture13.pdf 整理，涵盖考试重点
+
+---
+
+## 📋 考试信息
+
+| 项目 | 内容 |
+|------|------|
+| **时间** | 6月25日 上午 8:00 - 10:00 |
+| **地点** | 文史楼 107 |
+| **形式** | 闭卷 |
+| **补考** | 无 |
+| **Project 7 截止** | 6月24日 晚 9:00 |
+
+---
+
+## 第一部分：异常处理（Exception Handling）
+
+### 1.1 异常处理语法
+
+```java
+// 抛出异常
+throw new ExceptionType();
+
+// 处理异常
+try {
+    // 可能抛出异常的代码
+} catch (ExceptionType e) {
+    // 处理异常
+}
+```
+
+### 1.2 自定义异常
+
+```java
+class SimpleException extends Exception { }
+
+public class InheritingExceptions {
+    public static void main(String[] args) {
+        try {
+            System.out.println("Throw SimpleException from f()");
+            throw new SimpleException();
+        } catch(Exception e) {
+            System.out.println("Caught it!");
+            System.out.println(e);
+            System.out.println(e.printStackTrace(System.out));
+        }
+    }
+}
+```
+
+### 1.3 方法抛出多个异常（throws）
+
+```java
+// 方法声明可能抛出多个异常
+bar() throws Type1Exception, Type2Exception {
+    // ...
+    throw new Type1Exception();
+    // ...
+    throw new Type2Exception();
+}
+
+// 调用方必须捕获
+foo() {
+    try {
+        bar();
+    } catch (Type1Exception e) {
+        // 处理 Type1Exception
+    } catch (Type2Exception e) {
+        // 处理 Type2Exception
+    }
+}
+```
+
+### 1.4 异常处理要点
+
+| 关键字 | 用途 |
+|--------|------|
+| `throw` | 在方法内部主动抛出异常对象 |
+| `throws` | 在方法声明中，说明该方法可能抛出的异常类型 |
+| `try-catch` | 捕获并处理异常 |
+| `Exception` 类 | 所有异常类的父类 |
+
+**throws 的作用**：
+- 中断当前方法的执行
+- 返回抛出的异常对象
+- 在该方法的调用路径上寻找合适的 catch
+
+---
+
+## 第二部分：I/O 流（I/O Streams）
+
+### 2.1 I/O 的基本概念
+
+**什么是 I/O？**
+- Input / Output
+- 程序与外界的数据交互
+
+**I/O 操作的抽象：流（Stream）**
+
+```
+数据流向：
+  外界数据 → 程序：InputStream（输入流）
+  程序数据 → 外界：OutputStream（输出流）
+```
+
+**数据的类型**：
+- 字节（ByteArrayStream）
+- 文件（FileStream）
+- 字符串（StringStream）
+- 对象（ObjectStream）
+
+### 2.2 核心 I/O 操作
+
+| 操作 | InputStream | OutputStream |
+|------|-------------|--------------|
+| 读取/写入 | `read()` | `write()` |
+| 关闭 | `close()` | `close()` |
+
+### 2.3 输入流的数据源
+
+| 数据源 | 对应的 InputStream 子类 |
+|--------|------------------------|
+| 字节数组 | `ByteArrayInputStream` |
+| 字符串 | `StringBufferInputStream` |
+| 文件 | `FileInputStream` |
+
+### 2.4 输出流的目的地
+
+| 目的地 | 对应的 OutputStream 子类 |
+|--------|-------------------------|
+| 字节数组 | `ByteArrayOutputStream` |
+| 文件 | `FileOutputStream` |
+
+### 2.5 Stream 类层次结构
+
+```
+InputStream
+    ├── ByteArrayInputStream
+    ├── StringBufferInputStream
+    └── FileInputStream
+
+OutputStream
+    ├── ByteArrayOutputStream
+    └── FileOutputStream
+```
+
+---
+
+## 第三部分：字节流读写示例
+
+### 3.1 写入文件（FileOutputStream + BufferedOutputStream）
+
+```java
+public static void fileOutputStream() throws IOException {
+    String str = "hello world!";
+    File file = new File("d:\\test2.txt");  // 创建文件对象
+    
+    if (!file.exists()) {
+        file.createNewFile();  // 文件不存在则创建
+    }
+    
+    FileOutputStream fOutputStream = new FileOutputStream(file);
+    BufferedOutputStream bOutputStream = new BufferedOutputStream(fOutputStream);
+    
+    byte[] buffer = str.getBytes();  // 字符串 → 字节数组
+    bOutputStream.write(buffer);
+    
+    bOutputStream.close();  // 先关外层
+    fOutputStream.close();  // 再关内层
+}
+```
+
+### 3.2 读取文件（FileInputStream + BufferedInputStream）
+
+```java
+public static void fileInput() throws IOException {
+    File file = new File("d:\\test2.txt");
+    FileInputStream finput = new FileInputStream(file);
+    BufferedInputStream bfinput = new BufferedInputStream(finput);
+    
+    int temp = 0;
+    while ((temp = bfinput.read()) != -1) {  // -1 表示读取完毕
+        System.out.print((char) temp);
+    }
+    
+    bfinput.close();
+    finput.close();
+}
+```
+
+### 3.3 字节流复制文件
+
+```java
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
+public class CopyBytes {
+    public static void main(String[] args) throws IOException {
+        FileInputStream in = null;
+        FileOutputStream out = null;
+        
+        try {
+            in = new FileInputStream("xanadu.txt");
+            out = new FileOutputStream("outagain.txt");
+            
+            int c;
+            while ((c = in.read()) != -1) {
+                out.write(c);  // 逐字节复制
+            }
+        } finally {
+            if (in != null) in.close();
+            if (out != null) out.close();
+        }
+    }
+}
+```
+
+---
+
+## 第四部分：缓冲流与装饰器模式
+
+### 4.1 为什么需要缓冲？
+
+| 问题 | 说明 |
+|------|------|
+| **效率低** | InputStream/OutputStream 每次读/写一个字节 |
+| **不易用** | 需要读/写基本类型（int, double 等） |
+| **不易读** | 需要格式化输出（print, println） |
+
+### 4.2 解决方案演化
+
+**方案1：增加参数（不推荐）**
+```java
+read(byte[] buffer, int off, int len)
+```
+缺点：用户需要指定 buffer 长度，暴露实现细节
+
+**方案2：继承（不推荐）**
+```
+BufferedFileInputStream, BufferedFileOutputStream
+BufferedByteArrayInputStream, BufferedByteArrayOutputStream
+...
+```
+缺点：类数量爆炸（N 种数据源 × M 种功能）
+
+**方案3：组合（推荐 ✅）**
+```java
+// 定义 BufferedInputStream，包含一个 InputStream 对象
+BufferedInputStream bf = new BufferedInputStream(fin);
+```
+优点：动态组合，灵活扩展
+
+### 4.3 缓冲流的使用
+
+```java
+// 文件输入 + 缓冲
+FileInputStream fin = new FileInputStream("xanadu.txt");
+BufferedInputStream bf = new BufferedInputStream(fin);
+bf.read();  // 缓冲读取
+
+// 文件输出 + 缓冲
+FileOutputStream fout = new FileOutputStream("xanadu.txt");
+BufferedOutputStream bf = new BufferedOutputStream(fout);
+bf.write(1);  // 缓冲写入
+
+// 字节数组 + 缓冲
+ByteArrayInputStream bin = new ByteArrayInputStream("xanadu.txt".getBytes());
+BufferedInputStream bf = new BufferedInputStream(bin);
+bf.read();
+
+// 字节数组输出 + 缓冲
+ByteArrayOutputStream bout = new ByteArrayOutputStream();
+BufferedOutputStream bf = new BufferedOutputStream(bout);
+bf.write(1);
+```
+
+### 4.4 添加更多功能
+
+```
+BufferedInputStream  → 添加缓冲功能
+DataInputStream      → 添加读取基本类型功能（readInt, readDouble, readFloat...）
+PrintStream          → 添加格式化输出功能（println, print, printf...）
+```
+
+### 4.5 装饰器链（Decorator Pattern）
+
+```java
+// 组合多个功能
+FileInputStream fin = new FileInputStream("xanadu.txt");
+BufferedInputStream bf = new BufferedInputStream(fin);
+DataInputStream din = new DataInputStream(bf);
+
+din.read();         // 字节读取
+din.readInt();      // 读取 int
+din.readDouble();   // 读取 double
+
+// 输出链
+FileOutputStream fout = new FileOutputStream("xanadu.txt");
+BufferedOutputStream bf = new BufferedOutputStream(fout);
+DataOutputStream dout = new DataOutputStream(bf);
+
+dout.write(1);
+dout.writeInt(10);
+dout.writeDouble(3.14);
+```
+
+### 4.6 FilterInputStream 和 FilterOutputStream
+
+**FilterInputStream**：
+- 是 `InputStream` 的子类
+- 构造函数：`protected FilterInputStream(InputStream in)`
+- 包含一个 `InputStream` 类型的成员变量
+- 子类：`BufferedInputStream`, `DataInputStream`
+
+**FilterOutputStream**：
+- 是 `OutputStream` 的子类
+- 类似的设计
+
+```
+FilterInputStream
+    ├── BufferedInputStream
+    └── DataInputStream
+
+FilterOutputStream
+    ├── BufferedOutputStream
+    ├── DataOutputStream
+    └── PrintStream
+```
+
+---
+
+## 第五部分：文件操作（Path 和 Files）
+
+### 5.1 File 类 vs Path 接口
+
+| 特性 | File 类（Java 7 之前） | Path 接口（Java 7+） |
+|------|----------------------|---------------------|
+| 引入版本 | Java 1.0 | Java 7 |
+| 包 | java.io | java.nio.file |
+| 地位 | 旧 API | 替代 File 类 |
+
+```java
+// File 转 Path
+File file = new File("C:/Documents/tmp/Hello.java");
+Path path = file.toPath();
+```
+
+### 5.2 创建 Path 对象
+
+```java
+// 方式1：使用 Paths.get()
+Path p1 = Paths.get("C:/Document/tmp/Hello.java");
+
+// 方式2：使用 FileSystems
+Path p2 = FileSystems.getDefault().getPath("C:/Document/tmp/Hello.java");
+
+// Windows 路径（使用双反斜杠）
+Path path = Paths.get("C:\\home\\joe\\foo");
+```
+
+### 5.3 Path 常用方法
+
+```java
+Path path = Paths.get("C:\\home\\joe\\foo");
+
+System.out.format("toString: %s\n", path.toString());       // C:\home\joe\foo
+System.out.format("getFileName: %s\n", path.getFileName()); // foo
+System.out.format("getName(0): %s\n", path.getName(0));     // home
+System.out.format("getNameCount: %d\n", path.getNameCount());// 3
+System.out.format("subpath(0,2): %s\n", path.subpath(0,2)); // home\joe
+System.out.format("getParent: %s\n", path.getParent());     // home\joe\
+System.out.format("getRoot: %s\n", path.getRoot());         // C:\
+```
+
+### 5.4 判断文件是否存在
+
+```java
+Path p = Paths.get("C:/Document/tmp/Hello.java");
+System.out.println(Files.exists(p));
+```
+
+### 5.5 判断文件权限
+
+```java
+Path p = Paths.get("C:/Document/tmp/Hello.java");
+System.out.println(Files.isReadable(p));
+System.out.println(Files.isWritable(p));
+System.out.println(Files.isExecutable(p));
+```
+
+### 5.6 删除文件
+
+```java
+try {
+    Files.delete(path);
+} catch (NoSuchFileException x) {
+    System.out.format("%s: no such file or directory\n", path);
+} catch (DirectoryNotEmptyException x) {
+    System.out.format("%s not empty\n", path);
+} catch (IOException x) {
+    // 文件权限问题等
+    System.out.println(x);
+}
+```
+
+### 5.7 获取文件信息
+
+| 方法 | 说明 |
+|------|------|
+| `Files.size(Path)` | 获取文件大小 |
+| `Files.isDirectory(Path)` | 是否为目录 |
+| `Files.isRegularFile(Path)` | 是否为普通文件 |
+| `Files.isSymbolicLink(Path)` | 是否为符号链接 |
+| `Files.getLastModifiedTime(Path)` | 获取最后修改时间 |
+| `Files.setLastModifiedTime(Path, FileTime)` | 设置最后修改时间 |
+| `Files.getOwner(Path)` | 获取文件所有者 |
+| `Files.setOwner(Path, UserPrincipal)` | 设置文件所有者 |
+
+### 5.8 Files 类的静态方法（汇总）
+
+```
+文件操作：
+- 文件是否存在：Files.exists()
+- 创建文件
+- 删除文件：Files.delete()
+- 拷贝/移动
+- 重命名
+- 列出目录下所有文件
+```
+
+---
+
+## 第六部分：字符流（Reader / Writer）
+
+### 6.1 字节流 vs 字符流
+
+| 特性 | InputStream / OutputStream | Reader / Writer |
+|------|---------------------------|-----------------|
+| 操作单位 | **字节**（byte） | **字符**（char） |
+| 编码 | 字节流 | Unicode（UTF-16） |
+| 每次读取 | 8 bit | 16 bit 或 32 bit |
+
+### 6.2 对应的装饰器
+
+| 字节流 | 字符流 |
+|--------|--------|
+| FilterInputStream | FilterReader |
+| FilterOutputStream | FilterWriter |
+| BufferedInputStream | BufferedReader |
+| BufferedOutputStream | BufferedWriter |
+| DataInputStream | - |
+| DataOutputStream | - |
+| PrintStream | PrintWriter |
+
+---
+
+## 第七部分：典型 I/O 示例
+
+### 7.1 读取文件到字符串
+
+```java
+import java.io.*;
+
+public class BufferedInputStream {
+    public static String read(String filename) throws IOException {
+        BufferedReader in = new BufferedReader(new FileReader(filename));
+        String s;
+        StringBuilder sb = new StringBuilder();
+        
+        while ((s = in.readLine()) != null) {
+            sb.append(s + "\n");
+        }
+        in.close();
+        return sb.toString();
+    }
+    
+    public static void main(String[] args) throws IOException {
+        System.out.print(read("BufferedInputStream.java"));
+    }
+}
+```
+
+### 7.2 从内存读取（StringReader）
+
+```java
+import java.io.*;
+
+public class MemoryInputStream {
+    public static void main(String[] args) throws IOException {
+        StringReader in = new StringReader(
+            BufferedReaderFile.read("MemoryInputStream.java")
+        );
+        
+        int c;
+        while ((c = in.read()) != -1) {
+            System.out.print((char) c);
+        }
+    }
+}
+```
+
+### 7.3 格式化内存输入（DataInputStream + ByteArrayInputStream）
+
+```java
+import java.io.*;
+
+public class FormattedMemoryInput {
+    public static void main(String[] args) throws IOException {
+        try {
+            DataInputStream in = new DataInputStream(
+                new ByteArrayInputStream(
+                    BufferedInputStream.read("FormattedMemoryInput.java").getBytes()
+                )
+            );
+            while (true) {
+                System.out.print((char) in.readByte());
+            }
+        } catch (EOFException e) {
+            System.err.println("End of stream");
+        }
+    }
+}
+```
+
+### 7.4 检测文件结束（available()）
+
+```java
+import java.io.*;
+
+public class TestEOF {
+    public static void main(String[] args) throws IOException {
+        DataInputStream in = new DataInputStream(
+            new BufferedInputStream(
+                new FileInputStream("TestEOF.java")
+            )
+        );
+        
+        while (in.available() != 0) {
+            System.out.print((char) in.readByte());
+        }
+    }
+}
+```
+
+### 7.5 文件输出（PrintWriter）
+
+```java
+import java.io.*;
+
+public class BasicFileOutput {
+    static String file = "BasicFileOutput.out";
+    
+    public static void main(String[] args) throws IOException {
+        BufferedReader in = new BufferedReader(
+            new StringReader(
+                BufferedReaderFile.read("BasicFileOutput.java")
+            )
+        );
+        
+        PrintWriter out = new PrintWriter(
+            new BufferedWriter(new FileWriter(file))
+        );
+        
+        int lineCount = 1;
+        String s;
+        while ((s = in.readLine()) != null) {
+            out.println(lineCount++ + ":" + s);
+        }
+        out.close();
+        
+        // 显示存储的文件
+        System.out.println(BufferedReaderFile.read(file));
+    }
+}
+```
+
+### 7.6 存储和恢复数据（DataOutputStream / DataInputStream）
+
+```java
+import java.io.*;
+
+public class StoringAndRecoveringData {
+    public static void main(String[] args) throws IOException {
+        // 写入数据
+        DataOutputStream out = new DataOutputStream(
+            new BufferedOutputStream(new FileOutputStream("Data.txt"))
+        );
+        out.writeDouble(3.14159);
+        out.writeUTF("That was pi");
+        out.writeDouble(1.41413);
+        out.writeUTF("Square root of 2");
+        out.close();
+        
+        // 读取数据（必须按写入顺序读取）
+        DataInputStream in = new DataInputStream(
+            new BufferedInputStream(new FileInputStream("Data.txt"))
+        );
+        System.out.println(in.readDouble());
+        System.out.println(in.readUTF());
+        System.out.println(in.readDouble());
+        System.out.println(in.readUTF());
+    }
+}
+```
+
+### 7.7 标准 I/O
+
+```java
+public class Echo {
+    public static void main(String[] args) throws IOException {
+        BufferedReader stdin = new BufferedReader(
+            new InputStreamReader(System.in)
+        );
+        
+        String s;
+        while ((s = stdin.readLine()) != null && s.length() != 0) {
+            System.out.println(s);
+        }
+    }
+}
+```
+
+**标准 I/O 流**：
+
+| 对象 | 类型 | 说明 |
+|------|------|------|
+| `System.out` | PrintStream | 标准输出 |
+| `System.err` | PrintStream | 标准错误输出 |
+| `System.in` | InputStream | 标准输入（需要预处理） |
+
+---
+
+## 第八部分：装饰器模式（Decorator Pattern）
+
+### 8.1 模式结构
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                   装饰器模式                             │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  1. Component（组件接口）                               │
+│     └── InputStream / OutputStream                      │
+│                                                         │
+│  2. ConcreteComponent（具体组件）                       │
+│     └── FileInputStream, ByteArrayInputStream           │
+│                                                         │
+│  3. Decorator（装饰器抽象类）                           │
+│     └── FilterInputStream / FilterOutputStream          │
+│                                                         │
+│  4. ConcreteDecorator（具体装饰器）                     │
+│     ├── BufferedInputStream   (添加缓冲)               │
+│     ├── DataInputStream        (添加基本类型读取)      │
+│     └── PrintStream            (添加格式化输出)        │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 8.2 为什么叫"装饰器"？
+
+```
+功能叠加：
+    FileInputStream                    ← 基础功能：读字节
+    ↓ 装饰
+    BufferedInputStream                ← 新增：缓冲
+    ↓ 装饰
+    DataInputStream                    ← 新增：readInt/readDouble
+```
+
+**优点**：
+1. 动态组合功能（运行时选择）
+2. 避免类爆炸（N 种数据源 × M 种功能 = N+M 个类，而不是 N×M 个）
+3. 符合开闭原则（对扩展开放，对修改关闭）
+
+---
+
+## 总结
+
+### 异常处理要点
+- `throw` + `throws` 的区别
+- `try-catch` 结构
+- 自定义异常（继承 Exception）
+
+### I/O 流核心类层次
+```
+InputStream (字节输入)
+    ├── FileInputStream
+    ├── ByteArrayInputStream
+    └── FilterInputStream
+            ├── BufferedInputStream
+            └── DataInputStream
+
+OutputStream (字节输出)
+    ├── FileOutputStream
+    ├── ByteArrayOutputStream
+    └── FilterOutputStream
+            ├── BufferedOutputStream
+            ├── DataOutputStream
+            └── PrintStream
+
+Reader (字符输入)
+    ├── FileReader
+    ├── StringReader
+    └── BufferedReader
+
+Writer (字符输出)
+    ├── FileWriter
+    ├── StringWriter
+    └── BufferedWriter / PrintWriter
+```
+
+### 关键概念
+1. **装饰器模式**：通过组合实现功能叠加
+2. **缓冲流**：提高 I/O 效率
+3. **数据流**：读写基本类型
+4. **Path/Files**：Java 7+ 文件操作新 API
+5. **Reader/Writer**：字符流（处理文本）
+6. **InputStream/OutputStream**：字节流（处理二进制）
+
+---
+
+> 📌 **考试重点**：异常处理语法、I/O 流的层次结构、装饰器模式、文件操作、典型 I/O 代码示例
+
+祝考试顺利！🎓
